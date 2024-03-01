@@ -62,6 +62,23 @@ To run our on-premise server, only Docker is required. This document describes h
    ```
    docker ps | grep syntevo-license-server
    ```
+## Verify users with LDAP query
+
+SmartGit supports querying LDAP servers (like an active directory) to determine whether a client (identified by the login user on the operating system) is authorized. To enable LDAP querying, add these environment variables to your docker startup:
+
+```
+-e LDAPACTIVE=true -e LDAPQUERY=<your LDAP query> -e SPRING_LDAP_URLS=<ldap URLs comma separated> -e SPRING_LDAP_USERNAME=<service user> -e SPRING_LDAP_PASSWORD=<password> -e SPRING_LDAP_BASE=<root node for queries>
+```
+
+We use Spring Boot as platform for the license server and its builtin support for LDAP querying. Thus you can use any properties that spring boot supports for configuring LDAP. See https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html for all properties that can be set, specifically the spring.ldap.* properties for the LDAP connection. Please note that configuring any properties other than the ones mentioned in this document is unsupported and YMMV.
+
+A full example for a license server that connects to a LDAP server is this:
+
+```
+docker run --restart unless-stopped --name syntevo-license-server -d -v /var/syntevo-license-server/data:/data -v /var/syntevo-license-server/licenses:/licenses -p 8080:8080 -e LDAPACTIVE=true -e LDAPQUERY='(&(objectClass=person)(uid={0}))' -e SPRING_LDAP_URLS=syntevo-license-ldap-server:8389 -e SPRING_LDAP_USERNAME='uid=admin' -e SPRING_LDAP_PASSWORD=secret -e SPRING_LDAP_BASE='dc=springframework,dc=org'  ghcr.io/syntevo/license-opserver:latest
+```
+
+For more information about LDAP queries please refer to the specification at https://datatracker.ietf.org/doc/html/rfc4515 and the vendor documentation of your LDAP server.
 
 ### Logs
 
